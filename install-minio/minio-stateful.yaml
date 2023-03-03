@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: minio
+  labels:
+    app: minio
+spec:
+  serviceName: minio
+  replicas: 1
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-2
+      containers:
+      - name: minio
+        image: minio/minio:latest
+        command:
+          - sh
+          - -c
+          - minio server /data --console-address ":5000"
+        ports:
+        - name: data
+          containerPort: 9000
+          protocol: "TCP"
+        - name: console
+          containerPort: 5000
+          protocol: "TCP"
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1024Mi
+          requests:
+            cpu: 1000m
+            memory: 1024Mi
+        volumeMounts:
+        - name: minio-data
+          mountPath:  /data
+      volumes:
+      - name: minio-data
+        persistentVolumeClaim:
+          claimName: minio-pvc

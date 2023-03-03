@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-zh-gateway
+  namespace: dev-zh
+  labels:
+    app: dev-zh-gateway
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: dev-zh-gateway
+  template:
+    metadata:
+      labels:
+        app: dev-zh-gateway
+    spec:
+      containers:
+      - name: dev-zh-gateway
+        image: 10.1.0.67:5000/dev-zh-gateway
+        imagePullPolicy: Always
+        args: ["--spring.config.location=bootstrap.yaml"]
+        ports:
+        - containerPort: 8080
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: " -Xms1024m -Xmx4096m -Xmn256m "
+        volumeMounts:
+        - name: dev-gateway-config
+          mountPath: /opt/bootstrap.yaml
+          subPath: bootstrap.yaml
+      volumes:
+      - name: dev-gateway-config
+        configMap:
+          name: dev-gateway-configmap
+          items:
+            - key: bootstrap.yaml
+              path: bootstrap.yaml

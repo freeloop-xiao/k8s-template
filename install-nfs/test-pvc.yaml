@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: test-nfs-pvc
+  namespace: test
+spec:
+  accessModes:
+    - ReadWriteMany
+  storageClassName: storage-nfs
+  resources:
+    requests:
+      storage: 2Gi
+  selector:
+    matchLabels:
+      pv: db

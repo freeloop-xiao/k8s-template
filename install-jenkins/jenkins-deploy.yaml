@@ -1,0 +1,130 @@
+###############创建一个ServiceAccount 名称为：jenkins-admin###################
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-admin
+  namespace: jenkins
+  labels:
+    name: jenkins
+
+###############绑定账户jenkins-admin 为集群管理员角色，为了控制权限建议绑定自定义角色###################
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: jenkins-admin
+  labels:
+    name: jenkins
+subjects:
+  - kind: ServiceAccount
+    name: jenkins-admin
+    namespace: jenkins
+roleRef:
+  kind: ClusterRole
+  # cluster-admin 是 k8s 集群中默认的管理员角色
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+
+
+############### 在 default 命名空间创建 deployment ###################
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins
+  namespace: jenkins
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-3
+      terminationGracePeriodSeconds: 10
+      # 注意：k8s 1.21.x 中 serviceAccount 改名为 serviceAccountName
+      # 这里填写上面创建的 serviceAccount 的 name
+      serviceAccount: jenkins-admin
+      containers:
+        - name: jenkins
+          image: jenkins/jenkins:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: JAVA_OPTS
+              value: -Duser.timezone=Asia/Shanghai
+          ports:
+            - containerPort: 8080
+              name: web
+              protocol: TCP
+            - containerPort: 50000
+              name: agent
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+          livenessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          readinessProbe:
+            httpGet:
+              path: /login
+              port: 8080
+            initialDelaySeconds: 60
+            timeoutSeconds: 5
+            failureThreshold: 12
+          volumeMounts:
+            - name: jenkinshome
+              mountPath: /var/jenkins_home
+      volumes:
+        - name: jenkinshome
+          persistentVolumeClaim:
+            claimName: jenkins-pvc
+
+############### 在 jenkins 命名空间创建 service ###################
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-svc
+  namespace: jenkins
+  labels:
+    app: jenkins
+spec:
+  selector:
+    app: jenkins
+  type: NodePort
+  ports:
+    - name: web
+      port: 8080
+      targetPort: 8080
+
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-agent-svc
+  namespace: jenkins
+  labels:
+    app: jenkins
+spec:
+  selector:
+    app: jenkins
+  type: ClusterIP
+  ports:
+    - name: agent
+      port: 50000
+      targetPort: 50000

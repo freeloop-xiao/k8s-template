@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-zh-geo
+  namespace: dev-zh
+  labels:
+    app: dev-zh-geo
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: dev-zh-geo
+  template:
+    metadata:
+      labels:
+        app: dev-zh-geo
+    spec:
+      containers:
+      - name: dev-zh-geo
+        image: 10.1.0.67:5000/dev-zh-geo
+        imagePullPolicy: Always
+        args: ["--spring.config.location=bootstrap.yaml"]
+        ports:
+        - containerPort: 8086
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: " -Xms256m -Xmx2048m -Xmn256m "
+        volumeMounts:
+        - name: dev-geo-config
+          mountPath: /opt/bootstrap.yaml
+          subPath: bootstrap.yaml
+      volumes:
+      - name: dev-geo-config
+        configMap:
+          name: dev-geo-configmap
+          items:
+            - key: bootstrap.yaml
+              path: bootstrap.yaml

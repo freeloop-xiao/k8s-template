@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv-nfs-1
+  namespace: test
+  labels:
+    type: nfs
+    pv: db
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Recycle
+  storageClassName: storage-nfs
+  nfs:
+    path: "/data/nfs/node"
+    server: 10.1.0.67
+    readOnly: false

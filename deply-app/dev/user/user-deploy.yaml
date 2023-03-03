@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-zh-user
+  namespace: dev-zh
+  labels:
+    app: dev-zh-user
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: dev-zh-user
+  template:
+    metadata:
+      labels:
+        app: dev-zh-user
+    spec:
+      containers:
+      - name: dev-zh-user
+        image: 10.1.0.67:5000/dev-zh-user
+        imagePullPolicy: Always
+        args: ["--spring.config.location=bootstrap.yaml"]
+        ports:
+        - containerPort: 8081
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: " -Xms1024m -Xmx4096m -Xmn256m "
+        volumeMounts:
+        - name: dev-user-config
+          mountPath: /opt/bootstrap.yaml
+          subPath: bootstrap.yaml
+      volumes:
+      - name: dev-user-config
+        configMap:
+          name: dev-user-configmap
+          items:
+            - key: bootstrap.yaml
+              path: bootstrap.yaml

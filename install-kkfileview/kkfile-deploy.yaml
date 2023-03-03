@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kkfile
+  namespace: kkfile
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kkfile
+  template:
+    metadata:
+      labels:
+        app: kkfile
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-2
+      containers:
+        - name: kkfile
+          image: keking/kkfileview:4.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8012
+              name: web
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 4Gi
+            requests:
+              cpu: 500m
+              memory: 2Gi
+

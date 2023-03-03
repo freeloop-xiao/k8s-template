@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dev-gateway-configmap
+  namespace: dev-zh
+data:
+  bootstrap.yaml: |
+    server:
+      port: 8080
+    spring:
+      application:
+        name: gateway
+      profiles:
+        active: dev
+      cloud:
+        gateway:
+          enabled: true
+          discovery:
+            locator:
+               enabled: true
+               lowerCaseServiceId: true
+        nacos:
+          config:
+            namespace: dev-id
+            server-addr: nacos-svc.nacos.svc.cluster.local:8848
+            username: dev
+            password: dfjx@123
+            file-extension: yaml
+            shared-configs:
+              - data-id: common.yaml
+                refresh: false
+              - data-id: secret-key.yaml
+                refresh: false
+              - data-id: gateway-white.yaml
+                refresh: true

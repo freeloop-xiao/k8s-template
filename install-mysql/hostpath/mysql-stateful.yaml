@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: mysql
+  labels:
+    app: mysql
+    tier: mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+      tier: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+        tier: mysql
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: k8s-2
+      containers:
+      - name: mysql
+        image: mysql:5.7
+        imagePullPolicy: IfNotPresent
+        args:  # 新版本镜像有更新，需要使用下面的认证插件环境变量配置才会生效
+        - --default_authentication_plugin=mysql_native_password
+        - --character-set-server=utf8mb4
+        - --collation-server=utf8mb4_unicode_ci
+        volumeMounts:                         # 容器内挂载点的定义部分
+          - name: time-zone                   # 容器内挂载点名称
+            mountPath: /etc/localtime         # 容器内挂载点路径，可以是文件或目录
+          - name: mysql-data
+            mountPath: /var/lib/mysql         # 容器内mysql的数据目录
+          - name: mysqlcnf                               # 引用 Volume的名称
+            mountPath: /etc/mysql/conf.d/mysqld.cnf      # 挂载到容器内的目录,这写全路径否则还是会覆盖
+            subPath: mysqld.cnf                          # 不会覆盖掉原本的路径下的文件，subpath的值必须是configMap中data下的key值
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 3306
+          name: dbport               # 起个名字,svc可以使用这个名字关联后端pod的端口,更改端口就不需要更改svc
+        env:                         # 使用env挂载环境变量可以清晰看出来使用了哪些环境变量,还可以自定义pod内环境变量名称
+          - name: POD_NAMESPACE      # 环境变量名
+            valueFrom:               # value来源
+              fieldRef:
+                apiVersion: v1
+                fieldPath: metadata.namespace    # 挂载名称空间进去
+          - name: MYSQL_ROOT_USERNAME            # 环境变量名==secret中key对应的value
+            valueFrom:
+              secretKeyRef:
+                name: mysql-password-secret           # secret 名称
+                key: mysql_root_username         # secret中key的name
+          - name: MYSQL_ROOT_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: mysql-password-secret
+                key: mysql_root_password
+      volumes:
+      - name: mysqlcnf                        # 引用 Volume的名称
+        configMap:
+          name: mysql-config                  # 使用ConfigMap "mysql-config"
+      - name: time-zone                       # 数据卷名称，需要与容器内挂载点名称一致
+        hostPath:
+          path: /etc/localtime                # 挂载到容器里的路径，将localtime文件挂载到容器里，可让容器使用本地的时区
+      - name: mysql-data
+        persistentVolumeClaim:                # 使用PVC进行挂载
+          claimName: mysql-pvc          # PVC name;  本地存放mysql数据的目录
+

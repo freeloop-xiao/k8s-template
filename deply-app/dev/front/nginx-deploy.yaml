@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-nginx
+  namespace: dev-zh
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dev-nginx
+  template:
+    metadata:
+      labels:
+        app: dev-nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
+        volumeMounts:                   
+          - name: nginx-pvc-data
+            mountPath: /usr/share/nginx/html
+      volumes:
+      - name: nginx-pvc-data
+        persistentVolumeClaim:
+          claimName: dev-nginx-pvc

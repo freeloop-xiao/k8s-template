@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-zh-auth
+  namespace: dev-zh
+  labels:
+    app: dev-zh-auth
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: dev-zh-auth
+  template:
+    metadata:
+      labels:
+        app: dev-zh-auth
+    spec:
+      containers:
+      - name: dev-zh-auth
+        image: 10.1.0.67:5000/dev-zh-auth
+        imagePullPolicy: Always
+        args: ["--spring.config.location=bootstrap.yaml"]
+        ports:
+        - containerPort: 8082
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: " -Xms256m -Xmx4096m -Xmn256m "
+        volumeMounts:
+        - name: dev-auth-config
+          mountPath: /opt/bootstrap.yaml
+          subPath: bootstrap.yaml
+      volumes:
+      - name: dev-auth-config
+        configMap:
+          name: dev-auth-configmap
+          items:
+            - key: bootstrap.yaml
+              path: bootstrap.yaml

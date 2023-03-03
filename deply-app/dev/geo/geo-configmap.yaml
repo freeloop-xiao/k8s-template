@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dev-geo-configmap
+  namespace: dev-zh
+data:
+  bootstrap.yaml: |
+    server:
+      port: 8086
+    spring:
+      application:
+        name: geo-center
+      profiles:
+        active: dev
+      main:
+        allow-bean-definition-overriding: true
+      cloud:
+        gateway:
+          enabled: true
+          discovery:
+            locator:
+               enabled: true
+               lowerCaseServiceId: true
+        nacos:
+          config:
+            namespace: dev-id
+            server-addr: nacos-svc.nacos.svc.cluster.local:8848
+            username: dev
+            password: dfjx@123
+            file-extension: yaml
+            shared-configs:
+              - data-id: common.yaml
+                refresh: false
+              - data-id: secret-key.yaml
+                refresh: false
+              - data-id: mybatis-plus.yaml
+                refresh: false
+              - data-id: zh-geo.yaml
+                refresh: false

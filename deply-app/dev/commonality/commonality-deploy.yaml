@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dev-zh-commonality
+  namespace: dev-zh
+  labels:
+    app: dev-zh-commonality
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: dev-zh-commonality
+  template:
+    metadata:
+      labels:
+        app: dev-zh-commonality
+    spec:
+      containers:
+      - name: dev-zh-commonality
+        image: 10.1.0.67:5000/dev-zh-commonality
+        imagePullPolicy: Always
+        args: ["--spring.config.location=bootstrap.yaml"]
+        ports:
+        - containerPort: 8084
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: " -Xms1024m -Xmx4096m -Xmn256m "
+        volumeMounts:
+        - name: dev-commonality-config
+          mountPath: /opt/bootstrap.yaml
+          subPath: bootstrap.yaml
+      volumes:
+      - name: dev-commonality-config
+        configMap:
+          name: dev-commonality-configmap
+          items:
+            - key: bootstrap.yaml
+              path: bootstrap.yaml

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: jenkins-web
+  namespace: test
+spec:
+  ports:
+    - name: http
+      port: 80
+      protocol: TCP
+      targetPort: 9090
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: jenkins-web
+  namespace: test
+subsets:
+  - addresses:
+      - ip: 10.1.1.254
+    ports:
+      - name: http
+        port: 9090
+        protocol: TCP

@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dev-user-configmap
+  namespace: dev-zh
+data:
+  bootstrap.yaml: |
+    ruoyi:
+      name: RuoYi
+      version: 3.8.3
+      copyrightYear: 2022
+      demoEnabled: true
+      profile: ./uploadPath
+      addressEnabled: false
+      captchaType: math
+    token:
+      header: Authorization
+      secret: abcdefghijklmnopqrstuvwxyz
+      expireTime: 30
+    pagehelper:
+      helperDialect: mysql
+      supportMethodsArguments: true
+      params: count=countSql
+    xss:
+      enabled: false
+      excludes: /system/notice
+      urlPatterns: /system/*,/monitor/*,/tool/*
+    auth:
+      pass: false
+      ignoring:
+        - /v2/**
+        - /webjars/**
+        - /swagger-ui.html
+        - /csrf/**
+        - /swagger-resources/**
+    server:
+      port: 8081
+    spring:
+      application:
+        name: user-center
+      profiles:
+        active: dev
+      messages:
+        basename: i18n/messages
+      servlet:
+        multipart:
+          max-file-size: 10MB
+          max-request-size: 20MB
+      main:
+        allow-bean-definition-overriding: true
+      cloud:
+        gateway:
+          enabled: true
+          discovery:
+            locator:
+               enabled: true
+               lowerCaseServiceId: true
+        nacos:
+          config:
+            namespace: dev-id
+            server-addr: nacos-svc.nacos.svc.cluster.local:8848
+            username: dev
+            password: dfjx@123
+            file-extension: yaml
+            shared-configs:
+              - data-id: common.yaml
+                refresh: false
+              - data-id: secret-key.yaml
+                refresh: false
+              - data-id: mybatis-plus.yaml
+                refresh: false
+              - data-id: zh-user.yaml
+                refresh: false
